@@ -16,8 +16,10 @@ def create_app(config=None):
     app.teardown_appcontext(db.close_db)
 
     from .catalog import bp as catalog_bp
+    from .orders import bp as orders_bp
 
     app.register_blueprint(catalog_bp)
+    app.register_blueprint(orders_bp)
 
     @app.get("/health")
     def health():
