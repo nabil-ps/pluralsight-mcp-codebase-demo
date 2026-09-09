@@ -1,7 +1,7 @@
 """Create and seed a local trailhead.db with realistic demo data.
 
-    python scripts/seed.py              # ~400 customers, ~60k orders
-    python scripts/seed.py --orders 100000
+    python scripts/seed.py              # ~400 customers, ~15k orders
+    python scripts/seed.py --orders 50000
 """
 import argparse
 import random
@@ -67,7 +67,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--db", default="trailhead.db")
     parser.add_argument("--customers", type=int, default=400)
-    parser.add_argument("--orders", type=int, default=60000)
+    parser.add_argument("--orders", type=int, default=15000)
     args = parser.parse_args()
 
     rng = random.Random(42)

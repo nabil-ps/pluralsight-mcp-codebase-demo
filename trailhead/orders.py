@@ -2,10 +2,51 @@ from datetime import datetime, timezone
 
 from flask import Blueprint, abort, jsonify, request
 
-from .db import get_db, query_one
+from .db import get_db, query_all, query_one
 from .pricing import price_cart
 
 bp = Blueprint("orders", __name__, url_prefix="/api")
+
+
+def _hydrate(order):
+    """Attach customer and line items (with product details) to an order row."""
+    order["customer"] = query_one(
+        "SELECT id, name, email, tier FROM customers WHERE id = ?",
+        (order["customer_id"],),
+    )
+    items = query_all(
+        "SELECT id, product_id, quantity, unit_price FROM order_items WHERE order_id = ?",
+        (order["id"],),
+    )
+    for item in items:
+        item["product"] = query_one(
+            "SELECT id, sku, name, category FROM products WHERE id = ?",
+            (item["product_id"],),
+        )
+    order["items"] = items
+    return order
+
+
+@bp.get("/orders/recent")
+def recent_orders():
+    """Ops dashboard feed: most recent orders, fully expanded."""
+    limit = min(int(request.args.get("limit", 50)), 500)
+    orders = query_all(
+        "SELECT * FROM orders ORDER BY created_at DESC LIMIT ?", (limit,)
+    )
+    return jsonify([_hydrate(o) for o in orders])
+
+
+@bp.get("/customers/<int:customer_id>/orders")
+def customer_orders(customer_id):
+    """Order history page for the account screen."""
+    if query_one("SELECT id FROM customers WHERE id = ?", (customer_id,)) is None:
+        abort(404)
+    orders = query_all(
+        "SELECT * FROM orders WHERE customer_id = ? ORDER BY created_at DESC",
+        (customer_id,),
+    )
+    return jsonify([_hydrate(o) for o in orders])
 
 
 def _load_cart(payload):
