@@ -40,6 +40,8 @@ def recent_orders():
 @bp.get("/customers/<int:customer_id>/orders")
 def customer_orders(customer_id):
     """Order history page for the account screen."""
+    # TODO(marcus): outfitter accounts are timing out here (>2s). Probably need
+    # Redis in front of this - revisit after the holiday freeze.
     if query_one("SELECT id FROM customers WHERE id = ?", (customer_id,)) is None:
         abort(404)
     orders = query_all(
